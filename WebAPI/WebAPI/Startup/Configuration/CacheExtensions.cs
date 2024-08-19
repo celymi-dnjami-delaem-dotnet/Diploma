@@ -5,7 +5,7 @@ using WebAPI.Core.Configuration;
 
 namespace WebAPI.Startup.Configuration
 {
-    public static class RedisExtensions
+    public static class CacheExtensions
     {
         public static void RegisterRedis(this IServiceCollection services, RedisSettings redisSettings)
         {

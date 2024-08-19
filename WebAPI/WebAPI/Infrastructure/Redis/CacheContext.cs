@@ -4,7 +4,6 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using StackExchange.Redis;
 using StackExchange.Redis.Extensions.Core.Abstractions;
-using WebAPI.Core.Configuration;
 using WebAPI.Core.Interfaces.Database;
 
 namespace WebAPI.Infrastructure.Redis
@@ -14,17 +13,9 @@ namespace WebAPI.Infrastructure.Redis
         private readonly IRedisCacheClient _redisCacheClient;
         private readonly ILogger<CacheContext> _logger;
 
-        private readonly bool _enableCache;
-
-        public CacheContext(AppSettings appSettings)
-        {
-            _enableCache = appSettings.Redis.EnableRedis;
-        }
-
         public CacheContext(
             IRedisCacheClient redisCacheClient,
-            ILogger<CacheContext> logger,
-            AppSettings appSettings) : this(appSettings)
+            ILogger<CacheContext> logger)
         {
             _redisCacheClient = redisCacheClient;
             _logger = logger;
@@ -32,14 +23,11 @@ namespace WebAPI.Infrastructure.Redis
 
         public async Task<T> Get<T>(string key)
         {
-            if (!_enableCache)
-            {
-                return default;
-            }
-
             try
             {
-                var @string = await Redis().StringGetAsync(key);
+                var redis = GetRedis();
+
+                var @string = await redis.StringGetAsync(key);
 
                 return @string.HasValue
                     ? JsonConvert.DeserializeObject<T>(@string)
@@ -55,14 +43,11 @@ namespace WebAPI.Infrastructure.Redis
 
         public async Task Set<T>(string key, T value, TimeSpan? expiry = null)
         {
-            if (!_enableCache)
-            {
-                return;
-            }
-
             try
             {
-                var isSet = await Redis().StringSetAsync(key, JsonConvert.SerializeObject(value), expiry);
+                var redis = GetRedis();
+
+                var isSet = await redis.StringSetAsync(key, JsonConvert.SerializeObject(value), expiry);
 
                 if (!isSet)
                 {
@@ -75,7 +60,7 @@ namespace WebAPI.Infrastructure.Redis
             }
         }
 
-        private IDatabase Redis() =>
+        private IDatabase GetRedis() =>
             _redisCacheClient.GetDbFromConfiguration().Database;
     }
 }

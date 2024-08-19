@@ -1,7 +1,5 @@
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using StackExchange.Redis.Extensions.Core.Abstractions;
 using WebAPI.ApplicationLogic.Providers;
 using WebAPI.ApplicationLogic.Services;
 using WebAPI.Core.Configuration;
@@ -33,18 +31,7 @@ namespace WebAPI.Startup.Configuration
             services.AddScoped<IStoryHistoryRepository, StoryHistoryRepository>();
             services.AddScoped<IStoryRepository, StoryRepository>();
             services.AddScoped<IWorkSpaceRepository, WorkSpaceRepository>();
-            services.AddScoped<ICacheContext, CacheContext>(serviceProvider =>
-            {
-                if (!appSettings.Redis.EnableRedis)
-                {
-                    return new CacheContext(appSettings);
-                }
-
-                return new CacheContext(
-                    serviceProvider.GetService<IRedisCacheClient>(),
-                    serviceProvider.GetService<ILogger<CacheContext>>(),
-                    appSettings);
-            });
+            services.AddScoped<ICacheContext, CacheContextProxy>();
 
             // Services
             services.AddScoped<IStoryService, StoryService>();
